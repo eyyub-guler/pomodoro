@@ -17,7 +17,7 @@ void pomo_stat();
 void pomo_main(int time);
 void scrmv();
 void animation();
-void screenwarning();
+void screenwarning(int x, int y);
 void prt_scr(FILE *file,int x, int y, int starty, int length);
 int main(int argc,int* argv ){
 pomo_main(second);
@@ -73,7 +73,7 @@ void pomo_main(int time){
         }
         if(rows < 11 || cols < 60){
             clear();
-            screenwarning();    
+            screenwarning(x+24, y+3);    
         } else {
             clear();
             rewind(f); 
@@ -84,7 +84,7 @@ void pomo_main(int time){
     }
     curs_set(1);
     fclose(f);
-        endwin();
+    endwin();
 
 }
 void pomo_stat(){
@@ -93,8 +93,10 @@ void pomo_stat(){
 void pomo_countdown(int time){
 
 }
-void screenwarning(){
-    mvaddch(3,3,'3');
+void screenwarning(int x, int y){
+    mvaddstr(y++,x,"terminal");
+    mvaddstr(y++,x,"  too");
+    mvaddstr(y++,x," small");
 }
 void prtscr(int *file, int x, int y, int starty, int length)
 {
