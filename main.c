@@ -91,13 +91,18 @@ void pomo_main(int time){
 
 }
 void pomo_choose(int time){
-    int d4,d3,d2,d1;//d is for digit
+    int d4,d3,d2,d1,isd4moved = 0,isd3moved  = 0,isd2moved  = 0,isd1moved  = 0;
+    int d4move_way = 0,d3move_way = 0,d2move_way = 0,d1move_way = 0;//d is for digit move way 1 is for up -1 is for down
     d4 = (time/60)/10;
     d3 = (time/60)%10;
     d2 = (time%60)/10;
     d1 = (time%60)%10;
     int whereisindex= -1,;
-    bool work = 1, exit = 0;
+    FILE *f = fopen("main_screen.txt","r");
+    FILE *work = fopen("work.txt","r");
+    FILE *brek = fopen("break.txt","r"); //its a typo but i couldnt find a better woed for it
+    FILE *number = fopen("clock_animation.txt","r");
+    bool iswork = 1, exit = 0;
     int i = 0,j;
     clear()
     FILE *number = fopen("clock_animation.txt" , "r");
@@ -150,10 +155,10 @@ void pomo_choose(int time){
                 int startingx = x + whereisindex*8;
                 int startingy = y + 17;
                 whereisindex = 1;
-                if(d3 == 9) break;
+                if(d3 == 9)
                 d3++;
-                second += 600;
-                second_nonused += 600;
+                second += 60;
+                second_nonused += 60;
                 while (fgets(line, sizeof(line), number)){
                     if(i >= (d4-1)* 10 + 1 && i < (d4 * 10) + 1){
                             for(j = 0;j < 6; j++){
@@ -181,7 +186,70 @@ void pomo_choose(int time){
         break;
     }
     if(exit) break;
-        refresh();
+    refresh();
+    // for printing word pomodoro
+    rewind(f); 
+    prt_scr(f, x+6,y,0, 3);
+    // for printing the work break screen
+    if(iswork){
+    rewind(work);
+    prt_scr(work, x+20,y+7,0, 3);
+    } else {
+        wind(brek);
+    prt_scr(brek, x+19,y+7,0, 3);
+    }
+    //for printing the warnings on the bottom
+    rewind(f); 
+    prt_scr(f, x,y+30,9, 2);
+    //for printing the two dots n the middle of numbers
+    mvaddstr(y+17,x+25,"██");
+    mvaddstr(y+18,x+25,"████");
+    mvaddstr(y+20,x+25,"████");
+    mvaddstr(y+21,x+25,"██");
+    //for printing the time and its animation
+    rewind(number); 
+    if(isd1moved || isd2moved || isd3moved || isd4moved){
+        if(isd1moved){
+            if(d1move_way == 1){
+                // make it move up
+            } else {
+                //make it move down
+            }
+            isd1moved = 0;
+        }
+        if(isd2moved){
+            if(d2move_way == 1){
+                // make it move up
+            } else {
+                //make it move down
+            }
+            isd2moved = 0;
+        }
+        if(isd3moved){
+            if(d3move_way == 1){
+                // make it move up
+            } else {
+                //make it move down
+            }
+            isd3moved = 0;
+        }
+        if(isd4moved){
+            if(d4move_way == 1){
+                // make it move up
+            } else {
+                //make it move down
+            }
+            isd4moved = 0;
+        }
+
+    } else {
+        //print index 1234 and dont make an animation
+        rewind(number); 
+        prt_scr(f, x+8,y+16,d4*10, 7);
+        prt_scr(f, x+16,y+16,d3*10, 7);
+        prt_scr(f, x+32,y+16,d2*10, 7);
+        prt_scr(f, x+40,y+16,d1*10, 7);
+    }
         napms(100);
     }
 }

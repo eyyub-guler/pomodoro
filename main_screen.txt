@@ -7,3 +7,5 @@
 
 
 q | quit  space | go to timer screen  s | check your stats
+q | quit   space | start timer   w | change work/break
+    ← → | change index         ↑ ↓ | change the time 
