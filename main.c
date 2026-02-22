@@ -8,6 +8,8 @@
 #include <string.h>
 #include <locale.h>
 
+#define WHITE 1
+
 volatile sig_atomic_t signal_status = 0;
 int second = 25*60;
 int second_nonused = 25*60;
@@ -17,6 +19,7 @@ void pomo_stat();
 void pomo_main(int time);
 void pomo_choose(int time);
 void scrmv(int ch,int color,int firstrow,int lastrow,int col);
+void numbermv(FILE *number,int digit,int startingy,int startingx, int moveway);
 void scrstrmv(FILE *file ,int copyindex, int startingx,int x_length,int startiny,int y_length);
 void animation();
 void screenwarning(int x, int y);
@@ -51,6 +54,7 @@ void pomo_main(int time){
     setlocale(LC_ALL, "");
     initscr();
     start_color();
+    init_pair(WHITE, COLOR_WHITE, COLOR_BLACK);
     curs_set(0);
     nodelay(stdscr, TRUE);
     signal(SIGINT, sighandler);
@@ -93,21 +97,22 @@ void pomo_main(int time){
 void pomo_choose(int time){
     int d4,d3,d2,d1,isd4moved = 0,isd3moved  = 0,isd2moved  = 0,isd1moved  = 0;
     int d4move_way = 0,d3move_way = 0,d2move_way = 0,d1move_way = 0;//d is for digit move way 1 is for up -1 is for down
+    int rows, cols;
     d4 = (time/60)/10;
     d3 = (time/60)%10;
     d2 = (time%60)/10;
     d1 = (time%60)%10;
-    int whereisindex= -1,;
+    int whereisindex= -1;
     FILE *f = fopen("main_screen.txt","r");
     FILE *work = fopen("work.txt","r");
     FILE *brek = fopen("break.txt","r"); //its a typo but i couldnt find a better woed for it
     FILE *number = fopen("clock_animation.txt","r");
+    FILE *numberS = fopen("clock_animation_6digit.txt","r");
     bool iswork = 1, exit = 0;
     int i = 0,j;
-    clear()
-    FILE *number = fopen("clock_animation.txt" , "r");
-    if(f==NULL){
-        mvaddstr(0,0,"file clock_animation.txt couldn open check your files");
+    clear();
+    if(f==NULL || work == NULL || brek == NULL || number == NULL || numberS == NULL){
+        mvaddstr(0,0,"file(s) couldn open check your files");
         return;
     }
     //print screen here first
@@ -130,72 +135,35 @@ void pomo_choose(int time){
             exit = 1 ;
         break;
         case ' ':
-            pomo_countdown(int time);
+            pomo_countdown(time);
         break;
         case KEY_UP:
-            if(whereisindex == -1 || whereisindex == 1){
-                whereisindex = 1;
-                int startingx = x + whereisindex*8;
-                int startingy = y + 17;
-                if(d4 >= 9){ break; d4 = 9;}
-                d4++;
-                second += 600;
-                second_nonused += 600;
-                while (fgets(line, sizeof(line), number)){
-                    if(i >= (d4-1)* 10 + 1 && i < (d4 * 10) + 1){
-                            for(j = 0;j < 6; j++){
-                                char c = line[j];
-                                scrmv(line[j],WHITE,startingy,startingy+7,startingx+j); //make colorpair and define white
-                            }
-                }
-                i++;
-                }
-                i = 0;
-            } else if (whereisindex == 2){
-                int startingx = x + whereisindex*8;
-                int startingy = y + 17;
-                whereisindex = 1;
-                if(d3 == 9)
-                d3++;
-                second += 60;
-                second_nonused += 60;
-                while (fgets(line, sizeof(line), number)){
-                    if(i >= (d4-1)* 10 + 1 && i < (d4 * 10) + 1){
-                            for(j = 0;j < 6; j++){
-                                char c = line[j];
-                                scrmv(line[j],WHITE,startingy,startingy+7,startingx+j); //make colorpair and define white
-                            }
-                }
-                i++;
-                }
-                i = 0;
-            } else if
             
             break;
 
         case KEY_DOWN:
-            move_down();
+          //  move_down();
         break;
 
             case KEY_LEFT:
-        move_left();
+        //move_left();
         break;
 
             case KEY_RIGHT:
-        move_right();
+        //move_right();
         break;
     }
     if(exit) break;
     refresh();
     // for printing word pomodoro
     rewind(f); 
-    prt_scr(f, x+6,y,0, 3);
+    prt_scr(f, x,y,0, 5);
     // for printing the work break screen
     if(iswork){
     rewind(work);
     prt_scr(work, x+20,y+7,0, 3);
     } else {
-        wind(brek);
+    rewind(brek);
     prt_scr(brek, x+19,y+7,0, 3);
     }
     //for printing the warnings on the bottom
@@ -206,52 +174,52 @@ void pomo_choose(int time){
     mvaddstr(y+18,x+25,"████");
     mvaddstr(y+20,x+25,"████");
     mvaddstr(y+21,x+25,"██");
+    //for printing under the index
+        switch(whereisindex){
+            case 1:
+            mvaddstr(y+24,x+9,"▀▀▀▀");
+            break;
+            case 2:
+            mvaddstr(y+24,x+17,"▀▀▀▀");
+            break;
+            case 3:
+            mvaddstr(y+24,x+33,"▀▀▀▀");
+            break;
+            case 4:
+            mvaddstr(y+24,x+41,"▀▀▀▀");
+            break;
+        }
     //for printing the time and its animation
     rewind(number); 
-    if(isd1moved || isd2moved || isd3moved || isd4moved){
+    rewind(numberS);
         if(isd1moved){
-            if(d1move_way == 1){
-                // make it move up
-            } else {
-                //make it move down
-            }
+            numbermv(number,d1,x+8,y+17,d1move_way);
             isd1moved = 0;
+        } else {
+            prt_scr(f, x+8,y+17,d1*10, 7);
         }
         if(isd2moved){
-            if(d2move_way == 1){
-                // make it move up
-            } else {
-                //make it move down
-            }
+            numbermv(numberS,d2,x+16,y+17,d2move_way);
             isd2moved = 0;
+        } else {
+            prt_scr(f, x+16,y+17,d2*10, 7);
         }
         if(isd3moved){
-            if(d3move_way == 1){
-                // make it move up
-            } else {
-                //make it move down
-            }
+            numbermv(number,d3,x+32,y+17,d3move_way);
             isd3moved = 0;
+        } else {
+            prt_scr(f, x+32,y+17,d3*10, 7);
         }
         if(isd4moved){
-            if(d4move_way == 1){
-                // make it move up
-            } else {
-                //make it move down
-            }
+            numbermv(number,d4,x+40,y+17,d4move_way);
             isd4moved = 0;
+        } else {
+            prt_scr(f, x+40,y+17,d4*10, 7);
         }
-
-    } else {
-        //print index 1234 and dont make an animation
-        rewind(number); 
-        prt_scr(f, x+8,y+16,d4*10, 7);
-        prt_scr(f, x+16,y+16,d3*10, 7);
-        prt_scr(f, x+32,y+16,d2*10, 7);
-        prt_scr(f, x+40,y+16,d1*10, 7);
-    }
+        refresh();
         napms(100);
-    }
+        clear();
+}
 }
 void pomo_stat(){
 
@@ -306,6 +274,7 @@ if (firstrow < lastrow){
 }
 }
 }
+
 void pomo_countdown(int time){
 
 }
@@ -328,4 +297,38 @@ void scrstrmv(FILE *file ,int copyindex, int startingx,int x_length,int starting
         i++;
     }
 
+}
+void numbermv(FILE *number,int digit,int startingy,int startingx, int moveway){
+    char str[10][6];
+    char line[256];
+    int a = 9,i = 1, j;
+    int startpoint = (10 - digit)*10 + 1;
+    if(digit == 0) startpoint = 1;
+    while (fgets(line, sizeof(line), number)){ 
+                    if(i >= startpoint  && i < startpoint + 10){
+                        for( j= 0; j < 6; j++){
+                            str[a][j] = line[j];
+                        }
+                        a--;
+                    }
+                    i++;
+    }
+    if(moveway == 1){
+        for(i = 0; i<10;i++){
+            for (j = 0; j<6; j++){
+                scrmv(str[i][j],WHITE,startingy,startingy+7,startingx+j);
+            }
+            //make colorpair and define white
+            // put refresh namps 
+        }
+        } else {
+                for(i = 9; i >=0 ;i++){
+                for (j = 0; j<6; j++){
+                scrmv(str[i][j],WHITE,startingy+7,startingy,startingx+j);
+                }
+                //make colorpair and define white
+                // put refresh namps 
+                }
+        
+            }
 }
