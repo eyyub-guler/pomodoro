@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ncurses.h>
 #include <time.h>
 #include <signal.h>
 #include <curses.h>
 #include <ncurses.h>
 #include <string.h>
 #include <locale.h>
+#include <stdbool.h>
 
 #define WHITE 1
 
@@ -24,7 +24,7 @@ void scrstrmv(FILE *file ,int copyindex, int startingx,int x_length,int startiny
 void animation();
 void screenwarning(int x, int y);
 void prt_scr(FILE *file,int x, int y, int starty, int length);
-int main(int argc,int* argv ){
+int main(int argc,char* argv ){
 pomo_main(second);
 }
 void sighandler(int s) {
@@ -97,12 +97,12 @@ void pomo_main(int time){
 void pomo_choose(int time){
     int d4,d3,d2,d1,isd4moved = 0,isd3moved  = 0,isd2moved  = 0,isd1moved  = 0;
     int d4move_way = 0,d3move_way = 0,d2move_way = 0,d1move_way = 0;//d is for digit move way 1 is for up -1 is for down
-    int rows, cols;
-    d4 = (time/60)/10;
-    d3 = (time/60)%10;
-    d2 = (time%60)/10;
-    d1 = (time%60)%10;
-    int whereisindex= -1;
+    int rows, cols,x,y,ch;
+    d1 = (time/60)/10;
+    d2 = (time/60)%10;
+    d3 = (time%60)/10;
+    d4 = (time%60)%10;
+    int whereisindex= 0;
     FILE *f = fopen("main_screen.txt","r");
     FILE *work = fopen("work.txt","r");
     FILE *brek = fopen("break.txt","r"); //its a typo but i couldnt find a better woed for it
@@ -117,10 +117,10 @@ void pomo_choose(int time){
     }
     //print screen here first
     while(1){
-        int ch = getch();
+        ch = getch();
         getmaxyx(stdscr, rows, cols);
-        int x = cols/2 - 27;
-        int y = rows/2 - 16;
+        x = cols/2 - 27;
+        y = rows/2 - 16;
         i = 0;
         if(rows < 11 || cols < 60){
             clear();
@@ -137,8 +137,54 @@ void pomo_choose(int time){
         case ' ':
             pomo_countdown(time);
         break;
+        case 'W':
+        case 'w':
+            iswork != iswork;
+        break;
         case KEY_UP:
-            
+            switch(whereisindex){
+                case 5:
+                whereisindex = 4;
+                case 4:
+                isd4moved = 1;
+                d4++;
+                second_nonused  += 1;
+                time+= 1;
+                if(d4 != 10) break;
+                d4 = 0;
+                case 3:
+                isd3moved = 1;
+                d3++;
+                if(whereisindex == 3) {
+                    second_nonused  += 10;
+                    time+= 10;
+                }
+                if(d3 != 6) break;
+                d3 = 0;
+                case 2:
+                isd2moved = 1;
+                d2++;
+                if(whereisindex == 2) {
+                    second_nonused  += 60;
+                    time+= 60;
+                }
+                if(d2 != 10) break;
+                d2 = 0;
+                case 0:
+                if(whereisindex == 0) whereisindex = 1;
+                case 1:
+                if(d1 == 9) break;
+                isd1moved = 1;
+                d1++;
+                if(whereisindex == 1) {
+                    second_nonused  += 600;
+                    time+= 600;
+                }
+                break;
+                default:
+                whereisindex = 0;
+                break;
+            }
             break;
 
         case KEY_DOWN:
@@ -146,15 +192,18 @@ void pomo_choose(int time){
         break;
 
             case KEY_LEFT:
-        //move_left();
+        if(whereisindex >= 1 && whereisindex <= 5 ){
+            whereisindex--;
+        }
         break;
 
             case KEY_RIGHT:
-        //move_right();
+        if(whereisindex >= 0 && whereisindex <= 4 ){
+            whereisindex++;
+        }
         break;
     }
-    if(exit) break;
-    refresh();
+    if(exit) break;;
     // for printing word pomodoro
     rewind(f); 
     prt_scr(f, x,y,0, 5);
@@ -196,30 +245,35 @@ void pomo_choose(int time){
             numbermv(number,d1,x+8,y+17,d1move_way);
             isd1moved = 0;
         } else {
-            prt_scr(f, x+8,y+17,d1*10, 7);
+            prt_scr(number, x+8,y+17,d1*10, 7);
         }
         if(isd2moved){
             numbermv(numberS,d2,x+16,y+17,d2move_way);
             isd2moved = 0;
         } else {
-            prt_scr(f, x+16,y+17,d2*10, 7);
+            prt_scr(number, x+16,y+17,d2*10, 7);
         }
         if(isd3moved){
             numbermv(number,d3,x+32,y+17,d3move_way);
             isd3moved = 0;
         } else {
-            prt_scr(f, x+32,y+17,d3*10, 7);
+            prt_scr(number, x+32,y+17,d3*10, 7);
         }
         if(isd4moved){
             numbermv(number,d4,x+40,y+17,d4move_way);
             isd4moved = 0;
         } else {
-            prt_scr(f, x+40,y+17,d4*10, 7);
+            prt_scr(number, x+40,y+17,d4*10, 7);
         }
         refresh();
         napms(100);
         clear();
 }
+fclose(f);
+fclose(work);
+fclose(brek);
+fclose(number);
+fclose(numberS);
 }
 void pomo_stat(){
 
