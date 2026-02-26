@@ -14,7 +14,7 @@ volatile sig_atomic_t signal_status = 0;
 int second = 25*60;
 int second_nonused = 25*60;
 
-void pomo_countdown(int time);
+int pomo_countdown(int time);
 void pomo_stat();
 void pomo_main(int time);
 void pomo_choose(int time);
@@ -102,7 +102,8 @@ void pomo_choose(int time){
     d2 = (time/60)%10;
     d3 = (time%60)/10;
     d4 = (time%60)%10;
-    int whereisindex= 0;
+    keypad(stdscr,true);
+    int whereisindex = 1;
     FILE *f = fopen("main_screen.txt","r");
     FILE *work = fopen("work.txt","r");
     FILE *brek = fopen("break.txt","r"); //its a typo but i couldnt find a better woed for it
@@ -135,7 +136,7 @@ void pomo_choose(int time){
             exit = 1 ;
         break;
         case ' ':
-            pomo_countdown(time);
+            time = pomo_countdown(time);
         break;
         case 'W':
         case 'w':
@@ -150,11 +151,13 @@ void pomo_choose(int time){
                 d4++;
                 second_nonused  += 1;
                 time+= 1;
+                d4move_way = 1;
                 if(d4 != 10) break;
                 d4 = 0;
                 case 3:
                 isd3moved = 1;
                 d3++;
+                d3move_way = 1;
                 if(whereisindex == 3) {
                     second_nonused  += 10;
                     time+= 10;
@@ -164,6 +167,7 @@ void pomo_choose(int time){
                 case 2:
                 isd2moved = 1;
                 d2++;
+                d2move_way = 1;
                 if(whereisindex == 2) {
                     second_nonused  += 60;
                     time+= 60;
@@ -176,6 +180,7 @@ void pomo_choose(int time){
                 if(d1 == 9) break;
                 isd1moved = 1;
                 d1++;
+                d1move_way = 1;
                 if(whereisindex == 1) {
                     second_nonused  += 600;
                     time+= 600;
@@ -239,31 +244,39 @@ void pomo_choose(int time){
             break;
         }
     //for printing the time and its animation
+    
     rewind(number); 
-    rewind(numberS);
         if(isd1moved){
-            numbermv(number,d1,x+8,y+17,d1move_way);
+            numbermv(number,d1,y+16,x+8,d1move_way);
             isd1moved = 0;
+            rewind(number); 
         } else {
-            prt_scr(number, x+8,y+17,d1*10, 7);
+            prt_scr(number, x+8,y+16,(10 - d1)*10, 7);
+            rewind(number); 
         }
         if(isd2moved){
-            numbermv(numberS,d2,x+16,y+17,d2move_way);
+            numbermv(number,d2,y+16,x+16,d2move_way);
             isd2moved = 0;
+            rewind(numberS);
         } else {
-            prt_scr(number, x+16,y+17,d2*10, 7);
+            prt_scr(number, x+16,y+16,(10 - d2)*10, 7);
+            rewind(numberS);
         }
         if(isd3moved){
-            numbermv(number,d3,x+32,y+17,d3move_way);
+            numbermv(numberS,d3,y+16,x+32,d3move_way);
             isd3moved = 0;
+            rewind(number); 
         } else {
-            prt_scr(number, x+32,y+17,d3*10, 7);
+            prt_scr(numberS, x+32,y+16,(6 - d3)*10, 7);
+            rewind(number); 
         }
         if(isd4moved){
-            numbermv(number,d4,x+40,y+17,d4move_way);
+            numbermv(number,d4,y+16,x+40,d4move_way);
             isd4moved = 0;
+            rewind(number); 
         } else {
-            prt_scr(number, x+40,y+17,d4*10, 7);
+            prt_scr(number, x+40,y+16,(10 - d4)*10, 7);
+            rewind(number); 
         }
         refresh();
         napms(100);
@@ -329,7 +342,7 @@ if (firstrow < lastrow){
 }
 }
 
-void pomo_countdown(int time){
+int pomo_countdown(int time){
 
 }
 void screenwarning(int x, int y){
@@ -372,7 +385,9 @@ void numbermv(FILE *number,int digit,int startingy,int startingx, int moveway){
             for (j = 0; j<6; j++){
                 scrmv(str[i][j],WHITE,startingy,startingy+7,startingx+j);
             }
-            //make colorpair and define white
+            refresh();
+             napms(10);
+         //make colorpair and define white
             // put refresh namps 
         }
         } else {
@@ -382,7 +397,10 @@ void numbermv(FILE *number,int digit,int startingy,int startingx, int moveway){
                 }
                 //make colorpair and define white
                 // put refresh namps 
-                }
+                refresh();
+                napms(10);
+            }
         
             }
+            
 }
