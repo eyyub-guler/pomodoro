@@ -7,6 +7,7 @@
 #include <string.h>
 #include <locale.h>
 #include <stdbool.h>
+#include <wchar.h>
 
 #define WHITE 1
 
@@ -140,13 +141,16 @@ void pomo_choose(int time){
         break;
         case 'W':
         case 'w':
-            iswork != iswork;
+            if(iswork == 0) iswork = 1;
+            else iswork = 0;
         break;
         case KEY_UP:
             switch(whereisindex){
+                // if time is 99:59 when you do one up it goes 90:00 fix thatz
                 case 5:
                 whereisindex = 4;
                 case 4:
+
                 isd4moved = 1;
                 d4++;
                 second_nonused  += 1;
@@ -193,6 +197,56 @@ void pomo_choose(int time){
             break;
 
         case KEY_DOWN:
+        switch (whereisindex){
+                case 5:
+                whereisindex = 4;
+                case 4:
+                if(time == 0)break;
+                isd4moved = 1;
+                d4--;
+                second_nonused  -= 1;
+                time-= 1;
+                d4move_way = -1;
+                if(d4 != -1) break;
+                d4 = 9;
+                case 3:
+                if(time < 10){
+                    d3 = 0;
+                } else {
+                    d3 = 5;
+                }
+                isd3moved = 1;
+                d3--;
+                d3move_way = -1;
+                if(whereisindex == 3) {
+                    second_nonused  -= 10;
+                    time-= 10;
+                }
+                if(d3 != -1) break;
+                
+                case 2:
+                isd2moved = 1;
+                d2--;
+                d2move_way = -1;
+                if(whereisindex == 2) {
+                    second_nonused  -= 60;
+                    time-= 60;
+                }
+                if(d2 != -1) break;
+                if(time < 60) d2 = 0;
+                else d2 = 9;
+                case 0:
+                if(whereisindex == 0) whereisindex = 1;
+                case 1:
+                if(d1 == 0) break;
+                isd1moved = -1;
+                d1--;
+                d1move_way = -1;
+                if(whereisindex == 1) {
+                    second_nonused  -= 600;
+                    time-= 600;
+        }
+    }
           //  move_down();
         break;
 
@@ -257,18 +311,18 @@ void pomo_choose(int time){
         if(isd2moved){
             numbermv(number,d2,y+16,x+16,d2move_way);
             isd2moved = 0;
-            rewind(numberS);
+            rewind(number);
         } else {
             prt_scr(number, x+16,y+16,(10 - d2)*10, 7);
-            rewind(numberS);
+            rewind(number);
         }
         if(isd3moved){
             numbermv(numberS,d3,y+16,x+32,d3move_way);
             isd3moved = 0;
-            rewind(number); 
+            rewind(numberS); 
         } else {
             prt_scr(numberS, x+32,y+16,(6 - d3)*10, 7);
-            rewind(number); 
+            rewind(numberS); 
         }
         if(isd4moved){
             numbermv(number,d4,y+16,x+40,d4move_way);
@@ -288,6 +342,7 @@ fclose(brek);
 fclose(number);
 fclose(numberS);
 }
+
 void pomo_stat(){
 
 }
@@ -300,7 +355,7 @@ if (firstrow == lastrow){
 
 if (firstrow < lastrow){
     chtype v = mvinch(firstrow, col);
-    char c = v & A_CHARTEXT;
+    int c = v & A_CHARTEXT;
     short pair = PAIR_NUMBER(v);
     int a = c;
     short currpair = pair;
@@ -321,7 +376,7 @@ if (firstrow < lastrow){
     }
 } else {
     chtype v = mvinch(lastrow, col);
-    char c = v & A_CHARTEXT;
+    int c = v & A_CHARTEXT;
     short pair = PAIR_NUMBER(v);
     int a = c;
     short currpair = pair;
@@ -365,8 +420,9 @@ void scrstrmv(FILE *file ,int copyindex, int startingx,int x_length,int starting
     }
 
 }
+
 void numbermv(FILE *number,int digit,int startingy,int startingx, int moveway){
-    char str[10][6];
+    int str[10][7];
     char line[256];
     int a = 9,i = 1, j;
     int startpoint = (10 - digit)*10 + 1;
@@ -376,7 +432,25 @@ void numbermv(FILE *number,int digit,int startingy,int startingx, int moveway){
                         for( j= 0; j < 6; j++){
                             str[a][j] = line[j];
                         }
-                        a--;
+                       chtype v = mvinch(lastrow, col);
+    int c = v & A_CHARTEXT;
+    short pair = PAIR_NUMBER(v);
+    int a = c;
+    short currpair = pair;
+    mvaddch(lastrow, col, ch| COLOR_PAIR(color));
+
+    for(int i = lastrow - 1; i >= firstrow; i--){
+        v = mvinch(i, col);
+        c = v & A_CHARTEXT;
+        pair = PAIR_NUMBER(v);
+        if(a == ' ' && c == ' '){
+                currpair = pair;
+                continue;
+        }
+        mvaddch(i, col, a| COLOR_PAIR(currpair));
+        a = c;
+        currpair = pair;
+}     a--;
                     }
                     i++;
     }
@@ -402,5 +476,55 @@ void numbermv(FILE *number,int digit,int startingy,int startingx, int moveway){
             }
         
             }
-            
+ return;           
 }
+
+numbermv(FILE *number,int digit,int startingy,int startingx, int moveway){
+	int array[10][6];
+	int i = 0, j = 0, k = 0;
+	char line[256];
+	if(array == NULL) break;
+	int startingp = (10 - digit)*10 + 1;
+	if (digit ==  0 && moveway != 1) startingp = 1;
+	while(fgets(line, sizeof(line), number)){ 
+		if(moveway){
+			if(i >= startingp && i < startingp + 10){
+				for(k = 0; k < 6; k++){
+					array[j][k] = line[k];
+				}
+				j++;
+			}
+		
+		} else {
+			if(i < startingp && i >= startingp - 10){
+				for(k = 0; k < 6; k++){
+					array[j][k] = line[k];
+				}
+				j++;
+			}
+		}	
+		i++;
+	}
+	
+	do{
+		
+		
+		
+		
+	
+	
+	
+	} while ()
+	} while ()
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	}
